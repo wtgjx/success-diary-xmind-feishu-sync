@@ -1,28 +1,43 @@
 # 成功日记 XMind 自动同步飞书
 
-把 `成功日记.xmind` 当作唯一写作源，后台监听 XMind 保存，并自动覆盖同步到同一个飞书文档。
+沉浸式在 XMind 写内容，自动同步到飞书，让 AI 可以实时理解你的记录。
 
-这个工具适合这样的使用方式：你只在 XMind 写成功日记，飞书负责展示和分享。同步逻辑是“整份 XMind 重新生成飞书文档”，不是每次追加一份新内容。
+## 为什么要做这个
 
-## 功能
+我特别喜欢 XMind 的画布和它的设计。它让人可以沉下心，在一个相对安静的画布里工作、记录、整理想法。
 
-- XMind 保存后自动同步飞书
-- 开机登录后自动后台运行
-- 飞书文档使用覆盖同步，避免重复追加
-- 支持 XMind 日期、事项、深层事项、概要、自由主题
-- 最近 7 份 XML 本地备份，便于误操作后排查
-- `doctor --fix` 一键检查并自动修复后台、自启动和 `lark-cli`
-- 不上传 `.sync`、日志、备份、XMind 原文件等私人数据
+我也喜欢飞书。尤其是飞书开放了飞书 CLI，让文档可以被 AI Agent 完整读取和操作。这意味着，当你的飞书 CLI 已经接入任意 AI 编程工具，比如 Codex、Claude Code、Cursor、Trae 等，AI 就可以实时看到你的内容，并基于这些内容继续帮你分析、整理和行动。
+
+但这两个工具各自好的地方，恰好也是对方没有的地方：
+
+- XMind 很适合沉浸式写作和结构化思考，但不适合把内容持续、稳定地导出给 AI 看。
+- 飞书很适合让 AI 读取和处理文档，但功能太多，写日记或沉浸工作时容易分散注意力。
+
+所以我开发了这个脚本。
+
+它的目标很简单：**你只在 XMind 里写内容，脚本自动把内容同步到飞书上。**
+
+这样你可以继续待在 XMind 的画布里思考和记录，同时让飞书成为 AI 能读取的镜像文档。当你的 AI 工具接入了飞书 CLI，它就能实时知道你写了什么，而你不用频繁切换工具。
 
 ## 环境要求
 
-- Windows
+- Windows 或 macOS
 - Python 3.10 或更高版本
-- 已安装并能运行 `lark-cli`
+- 已安装并能运行飞书 CLI
 - 已准备一个 XMind 文件，例如 `成功日记.xmind`
 - 已准备一个飞书文档或知识库页面链接
 
-先确认这两个命令能运行：
+飞书 CLI 可以通过 AI Agent 辅助安装。官方页面里也提供了类似下面的提示词：
+
+![飞书 CLI 通过 AI Agent 安装](assets/feishu-cli-ai-agent.png)
+
+你可以把这个提示词复制给 Codex、Claude Code、Cursor、Trae 等 AI 助手，让它帮你完成飞书 CLI 安装：
+
+```text
+帮我安装飞书 CLI: https://open.feishu.cn/document/no_class/mcp-archive/feishu-cli-installation-guide.md
+```
+
+安装完成后，确认下面命令能正常运行：
 
 ```powershell
 python --version
@@ -31,108 +46,41 @@ lark-cli --version
 
 ## 快速开始
 
-下载项目后，在项目目录打开 PowerShell。
+你能找到这个项目，说明你大概率认同这个理念：**让人留在适合思考的工具里，让 AI 去连接和搬运信息。**
 
-绑定自己的 XMind 和飞书文档：
+所以我假设你已经在使用 Codex、Claude Code、Cursor、Trae 这类 AI 编程工具。最推荐的部署方式不是自己逐条敲命令，而是把下面这段话交给 AI，让它帮你完成部署。
+
+### 让 AI 帮你部署
+
+先把这个仓库下载到本地，或者让 AI 帮你 clone：
+
+```text
+请帮我部署这个项目：https://github.com/wtgjx/success-diary-xmind-feishu-sync
+
+我的目标是：
+1. 检查本机是否有 Python 3.10+。
+2. 检查是否安装并能运行飞书 CLI，也就是 lark-cli。
+3. 如果没有飞书 CLI，请按官方文档帮我安装。
+4. 引导我提供 XMind 文件路径，例如 C:\path\成功日记.xmind。
+5. 引导我提供飞书文档或知识库页面链接。
+6. 运行 setup 绑定 XMind 和飞书文档。
+7. 运行 doctor --fix 自动修复后台、自启动和飞书 CLI。
+8. 最后运行 task-status，确认后台同步进程正在运行。
+
+请不要上传我的 .sync 文件夹、XMind 文件、日志、XML 备份或飞书链接到 GitHub。
+```
+
+如果你想自己执行，核心命令是下面两条：
 
 ```powershell
 python .\xmind_to_feishu.py setup --xmind "C:\path\成功日记.xmind" --doc "你的飞书文档链接"
-```
-
-自动修复环境并启动后台：
-
-```powershell
 python .\xmind_to_feishu.py doctor --fix
 ```
 
-以后只需要打开 XMind 写内容并保存。程序会在后台检测保存动作，并自动同步到飞书。
+完成后，你只需要继续在 XMind 里写内容并保存。脚本会在后台检测保存动作，并把当前 XMind 的完整内容覆盖同步到飞书文档。
 
-## 常用命令
+同步逻辑是：**XMind 是唯一源头，飞书是镜像展示。**
 
-查看当前状态：
+也就是说，XMind 里保留的内容会同步到飞书；XMind 里删除的内容，下次同步后也会从飞书消失。不要直接在飞书里手动改这份镜像文档，因为下次保存 XMind 时，飞书内容会被重新覆盖。
 
-```powershell
-python .\xmind_to_feishu.py task-status
-```
-
-立即同步一次：
-
-```powershell
-python .\xmind_to_feishu.py sync
-```
-
-只预演，不写入飞书：
-
-```powershell
-python .\xmind_to_feishu.py sync --dry-run
-```
-
-安装并立即启动后台：
-
-```powershell
-python .\xmind_to_feishu.py install-task --run-now
-```
-
-停止自动同步：
-
-```powershell
-python .\xmind_to_feishu.py uninstall-task
-```
-
-## 给普通用户的脚本
-
-`scripts` 目录里有几个 Windows 批处理脚本：
-
-- `setup-and-fix.bat`：首次配置并自动修复后台
-- `status.bat`：查看状态
-- `sync-now.bat`：立即同步
-- `uninstall.bat`：关闭自动同步
-
-普通用户可以双击这些脚本使用。
-
-## 同步规则
-
-XMind 是唯一源头，飞书是镜像展示。
-
-- XMind 中保留的内容，会出现在飞书里
-- XMind 中删除的内容，下次同步后也会从飞书消失
-- 直接在飞书里手动修改的内容，下次 XMind 保存后会被覆盖
-
-这样做可以避免每次保存都重复追加一份内容。
-
-## 本地数据
-
-程序运行后会在项目目录生成 `.sync` 文件夹，里面包含：
-
-- 同步配置
-- 同步日志
-- 最近生成的 XML
-- 最近 7 份 XML 备份
-
-`.sync` 是私人运行数据，不应该提交到 GitHub。
-
-## 开发测试
-
-运行测试：
-
-```powershell
-python -m unittest discover
-```
-
-语法检查：
-
-```powershell
-python -m py_compile .\xmind_to_feishu.py .\test_xmind_to_feishu.py
-```
-
-## 安全提醒
-
-不要把这些内容上传到公开仓库：
-
-- `.sync/`
-- 你的 `.xmind` 文件
-- 飞书文档链接或 token
-- 日志和 XML 备份
-- 任何真实日记内容
-
-仓库只应该包含工具代码、测试和说明文档。
+程序运行后会生成 `.sync` 文件夹，用来保存本地配置、日志和最近 7 份 XML 备份。这个文件夹是私人数据，不应该提交到 GitHub。
