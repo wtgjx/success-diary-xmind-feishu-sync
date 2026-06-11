@@ -1,0 +1,31 @@
+# Runtime state and private data
+.sync/
+*.xmind
+*.xml
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Test / tooling cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
